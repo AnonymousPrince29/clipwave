@@ -1,0 +1,393 @@
+<title>Clipwave</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600..800&family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: frosted glass panels floating over a violet-to-blue field. Hero splits copy + upload zone | animated demo; below it the progress card and clip grid, then three feature cards. */
+:root{
+  --bg:#0c0722; --bg-a:#35128f; --bg-b:#0b46c9;
+  --fg:#f4f1ff; --muted:#bcb5e0;
+  --glass:rgba(255,255,255,.07); --glass-hi:rgba(255,255,255,.14); --edge:rgba(255,255,255,.18);
+  --shadow:0 18px 50px rgba(5,2,24,.5);
+  --violet:#8b5cf6; --blue:#3b82ff; --focus:#a9c8ff;
+  --cta:linear-gradient(135deg,#7c3aed 0%,#2563ff 100%);
+  --gt1:#c4b0ff; --gt2:#62a8ff;
+  --track:rgba(255,255,255,.12); --wave:rgba(255,255,255,.38);
+  --scene1:#4a22b0; --scene2:#1e57e6;
+  --toast-bg:rgba(22,13,56,.95); --ok:#4ade80;
+  --font-display:'Bricolage Grotesque','Segoe UI',system-ui,sans-serif;
+  --font-body:'Figtree','Segoe UI',system-ui,sans-serif;
+  color-scheme:dark;
+}
+@media (prefers-color-scheme:light){
+  :root:not([data-theme="dark"]){
+    --bg:#ece6ff; --bg-a:#d2c2ff; --bg-b:#b4d0ff;
+    --fg:#1a1040; --muted:#564e80;
+    --glass:rgba(255,255,255,.52); --glass-hi:rgba(255,255,255,.78); --edge:rgba(255,255,255,.9);
+    --shadow:0 14px 40px rgba(76,48,170,.18);
+    --focus:#2b50d6; --gt1:#6d28d9; --gt2:#2563eb;
+    --track:rgba(40,20,110,.12); --wave:rgba(60,30,150,.35);
+    --toast-bg:rgba(255,255,255,.97); --ok:#15803d;
+    color-scheme:light;
+  }
+}
+:root[data-theme="light"]{
+  --bg:#ece6ff; --bg-a:#d2c2ff; --bg-b:#b4d0ff;
+  --fg:#1a1040; --muted:#564e80;
+  --glass:rgba(255,255,255,.52); --glass-hi:rgba(255,255,255,.78); --edge:rgba(255,255,255,.9);
+  --shadow:0 14px 40px rgba(76,48,170,.18);
+  --focus:#2b50d6; --gt1:#6d28d9; --gt2:#2563eb;
+  --track:rgba(40,20,110,.12); --wave:rgba(60,30,150,.35);
+  --toast-bg:rgba(255,255,255,.97); --ok:#15803d;
+  color-scheme:light;
+}
+
+*,*::before,*::after{box-sizing:border-box}
+body{
+  background:var(--bg); color:var(--fg);
+  font-family:var(--font-body); font-size:16px; line-height:1.55;
+  padding-inline:clamp(16px,4vw,32px); padding-block:0 40px;
+  position:relative; min-height:100%;
+}
+body::before{
+  content:""; position:fixed; inset:0; z-index:-1; pointer-events:none;
+  background:
+    radial-gradient(60% 50% at 12% 8%,var(--bg-a),transparent 70%),
+    radial-gradient(55% 45% at 92% 18%,var(--bg-b),transparent 70%),
+    radial-gradient(60% 50% at 50% 105%,var(--bg-a),transparent 70%);
+}
+.wrap{max-width:1160px; margin-inline:auto; display:flex; flex-direction:column; gap:72px}
+h1,h2,h3{font-family:var(--font-display); margin:0; text-wrap:balance; letter-spacing:-.01em}
+p{margin:0}
+:focus-visible{outline:2px solid var(--focus); outline-offset:3px}
+
+.glass{
+  background:var(--glass); border:1px solid var(--edge); border-radius:24px;
+  -webkit-backdrop-filter:blur(22px) saturate(140%); backdrop-filter:blur(22px) saturate(140%);
+  box-shadow:var(--shadow);
+}
+
+/* nav */
+.nav{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; padding-block:20px 0}
+.brand{display:flex; align-items:center; gap:10px; font:700 1.25rem/1 var(--font-display)}
+.pill{font-size:.8rem; font-weight:600; padding:7px 14px; border-radius:99px; background:var(--glass); border:1px solid var(--edge); color:var(--muted)}
+
+/* hero */
+.hero{display:grid; gap:36px; align-items:center; padding-top:8px}
+@media (min-width:920px){.hero{grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr); gap:48px}}
+.copy{display:flex; flex-direction:column; gap:20px; min-width:0}
+h1{font-size:clamp(2.2rem,5.4vw,3.7rem); line-height:1.04; font-weight:700}
+.grad{background:linear-gradient(100deg,var(--gt1),var(--gt2)); -webkit-background-clip:text; background-clip:text; color:transparent}
+.lede{color:var(--muted); font-size:1.1rem; max-width:52ch}
+
+/* upload zone */
+.drop{
+  position:relative; display:flex; align-items:center; gap:18px; padding:26px 24px; cursor:pointer;
+  transition:background .2s,border-color .2s,transform .2s;
+}
+.drop::before{content:""; position:absolute; inset:9px; border:1.5px dashed var(--edge); border-radius:17px; pointer-events:none; transition:border-color .2s}
+.drop:hover,.drop.over{background:var(--glass-hi)}
+.drop.over{border-color:var(--blue); transform:scale(1.01)}
+.drop.over::before{border-color:var(--blue)}
+.drop.busy{opacity:.6; cursor:progress}
+.up-ico{flex:none; width:56px; height:56px; border-radius:16px; background:var(--cta); display:grid; place-items:center; color:#fff; box-shadow:0 8px 24px rgba(59,95,255,.4)}
+.up-txt{display:flex; flex-direction:column; gap:2px; min-width:0}
+.up-txt strong{font:700 1.15rem/1.25 var(--font-display)}
+.up-txt u{text-decoration-color:var(--blue); text-underline-offset:3px}
+.up-txt small{color:var(--muted); font-size:.85rem}
+.err{margin-top:-6px; padding:10px 14px; border-radius:14px; background:rgba(244,63,94,.16); border:1px solid rgba(244,63,94,.45); font-size:.92rem}
+
+/* demo */
+.demo{margin:0; padding:18px; display:grid; grid-template-columns:minmax(0,1fr) minmax(0,.42fr); gap:16px; align-items:center}
+.src-col{display:grid; gap:20px; min-width:0; padding-top:10px}
+.src{position:relative; aspect-ratio:16/9; border-radius:14px; overflow:hidden; background:linear-gradient(120deg,var(--scene1),var(--scene2))}
+.fig{position:absolute; bottom:0; width:18%; height:72%}
+.fig::before{content:""; position:absolute; top:0; left:22%; width:56%; aspect-ratio:1; border-radius:50%; background:rgba(255,255,255,.88)}
+.fig::after{content:""; position:absolute; bottom:0; left:0; right:0; height:52%; border-radius:42% 42% 0 0; background:rgba(255,255,255,.55)}
+.f1{left:22%} .f2{left:64%}
+.crop{position:absolute; top:0; bottom:0; width:31.6%; border:2px solid #fff; border-radius:6px; box-shadow:0 0 0 400px rgba(8,4,30,.45); animation:track 7s ease-in-out infinite alternate}
+@keyframes track{from{left:12%}to{left:56%}}
+.tl{position:relative; height:46px; padding:0 8px; display:flex; align-items:flex-end; gap:2px; border-radius:12px; background:var(--glass); border:1px solid var(--edge)}
+.tl span{flex:1; background:var(--wave); border-radius:2px 2px 0 0; min-width:0}
+.tl .hit{flex:none; position:absolute; top:-10px; transform:translateX(-50%); padding:2px 8px; border-radius:99px; background:var(--cta); color:#fff; font:700 .7rem/1.4 var(--font-body); font-variant-numeric:tabular-nums; box-shadow:0 4px 12px rgba(37,99,255,.45)}
+.phone{position:relative; aspect-ratio:9/16; max-width:100%; border-radius:20px; overflow:hidden; border:1px solid var(--edge); background:linear-gradient(160deg,var(--scene1),var(--scene2)); box-shadow:var(--shadow)}
+.phone .fig{left:25%; width:50%; height:62%}
+.caps{position:absolute; left:6%; right:6%; bottom:8%; display:flex; flex-wrap:wrap; gap:4px; justify-content:center}
+.caps i{font:700 .7rem/1 var(--font-body); font-style:normal; padding:4px 6px; border-radius:6px; background:rgba(0,0,0,.5); color:#fff; animation:say 3.2s infinite}
+.caps i:nth-child(2){animation-delay:.8s} .caps i:nth-child(3){animation-delay:1.6s} .caps i:nth-child(4){animation-delay:2.4s}
+@keyframes say{0%{background:#fff;color:#1a1040;transform:scale(1.1)}22%,100%{background:rgba(0,0,0,.5);color:#fff;transform:none}}
+.demo figcaption{grid-column:1/-1; color:var(--muted); font-size:.85rem}
+
+/* results */
+.sec-head{display:flex; flex-direction:column; gap:6px; margin-bottom:20px}
+.sec-head h2{font-size:clamp(1.6rem,3.4vw,2.2rem); font-weight:700}
+.sec-head p{color:var(--muted)}
+.prog{padding:18px 22px; display:flex; flex-direction:column; gap:12px; margin-bottom:24px}
+.prog-row{display:flex; justify-content:space-between; gap:12px; font-weight:600; font-size:.95rem}
+.prog-row span:last-child{font-variant-numeric:tabular-nums}
+.bar{height:10px; border-radius:99px; background:var(--track); overflow:hidden}
+.fill{height:100%; width:0; border-radius:99px; background:var(--cta); transition:width .35s ease}
+.grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:20px}
+.clip{padding:12px; display:flex; flex-direction:column; gap:12px; min-width:0; border-radius:22px}
+.thumb{position:relative; aspect-ratio:9/16; border-radius:16px; overflow:hidden; background:linear-gradient(160deg,var(--scene1),var(--scene2))}
+.thumb img{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block}
+.thumb::after{content:""; position:absolute; inset:0; pointer-events:none; background:linear-gradient(to bottom,rgba(8,4,30,.4),transparent 28%,transparent 70%,rgba(8,4,30,.5))}
+.art{position:absolute; inset:0; background:linear-gradient(160deg,hsl(var(--h) 70% 40%),hsl(var(--h2) 80% 24%))}
+.art::before{content:""; position:absolute; left:34%; top:26%; width:32%; aspect-ratio:1; border-radius:50%; background:rgba(255,255,255,.85)}
+.art::after{content:""; position:absolute; left:18%; right:18%; bottom:0; height:38%; border-radius:45% 45% 0 0; background:rgba(255,255,255,.5)}
+.score,.chip{position:absolute; z-index:1; color:#fff; font-weight:700; line-height:1}
+.score{top:10px; left:10px; display:flex; align-items:baseline; gap:5px; padding:6px 10px; border-radius:99px; background:var(--cta); font-size:.7rem; box-shadow:0 4px 14px rgba(37,99,255,.5)}
+.score b{font-size:1rem; font-variant-numeric:tabular-nums}
+.chip{padding:5px 8px; border-radius:8px; background:rgba(12,7,34,.55); font-size:.68rem; -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px)}
+.chip.tr{top:10px; right:10px} .chip.bl{bottom:10px; left:10px} .chip.br{bottom:10px; right:10px}
+.meta{display:flex; flex-direction:column; gap:2px; padding-inline:2px}
+.meta h3{font-size:1.05rem; font-weight:700}
+.meta p{color:var(--muted); font-size:.85rem; font-variant-numeric:tabular-nums}
+.ex-label{font-size:.7rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); padding-inline:2px}
+.exports{display:grid; grid-template-columns:repeat(3,1fr); gap:6px}
+.xbtn{
+  font:600 .78rem/1 var(--font-body); color:var(--fg); cursor:pointer; min-height:38px; padding:8px 4px;
+  background:var(--glass-hi); border:1px solid var(--edge); border-radius:99px; transition:background .15s,color .15s,transform .15s;
+}
+a.xbtn{display:grid; place-items:center; text-decoration:none}
+.play{position:absolute; inset:0; z-index:1; display:grid; place-items:center; background:none; border:0; cursor:pointer; color:#fff}
+.play span{width:54px; height:54px; border-radius:50%; display:grid; place-items:center; background:rgba(12,7,34,.55); border:1px solid rgba(255,255,255,.35); -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px); transition:transform .15s}
+.play:hover span{transform:scale(1.08)}
+.thumb video{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; background:#000}
+.thumb.playing::after,.thumb.playing .chip,.thumb.playing .play{display:none}
+.xbtn:hover{background:var(--cta); color:#fff; border-color:transparent; transform:translateY(-1px)}
+
+/* features */
+.feats{display:grid; gap:20px; grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.feat{padding:26px; display:flex; flex-direction:column; gap:14px; min-width:0}
+.feat-ico{width:48px; height:48px; border-radius:14px; background:var(--cta); color:#fff; display:grid; place-items:center; box-shadow:0 8px 22px rgba(59,95,255,.38)}
+.feat h3{font-size:1.2rem; font-weight:700}
+.feat p{color:var(--muted)}
+footer{color:var(--muted); font-size:.85rem; padding-bottom:8px}
+
+.toast{
+  position:fixed; left:50%; bottom:calc(20px + env(safe-area-inset-bottom,0px)); transform:translate(-50%,16px);
+  opacity:0; pointer-events:none; transition:opacity .2s,transform .2s;
+  max-width:min(92vw,440px); padding:12px 18px; border-radius:16px; font-size:.92rem; font-weight:500;
+  background:var(--toast-bg); color:var(--fg); border:1px solid var(--edge); box-shadow:var(--shadow);
+}
+.toast.show{opacity:1; transform:translate(-50%,0)}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important; transition:none!important}
+}
+</style>
+
+<div class="wrap">
+  <header class="nav">
+    <div class="brand">
+      <svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7c3aed"/><stop offset="1" stop-color="#2563ff"/></linearGradient></defs><rect width="32" height="32" rx="10" fill="url(#lg)"/><rect x="10.5" y="6.5" width="11" height="19" rx="3.5" fill="#fff" fill-opacity=".94"/><path d="M14.4 12.6l4.4 3.4-4.4 3.4z" fill="#4f46e5"/></svg>
+      Clipwave
+    </div>
+    <span class="pill">Free · No watermarks</span>
+  </header>
+
+  <section class="hero">
+    <div class="copy">
+      <h1>Turn Long Videos into <span class="grad">Viral Clips</span> — Free, No Watermarks</h1>
+      <p class="lede">Drop in a podcast, webinar or stream. Clipwave finds the moments worth sharing and cuts each one to a vertical clip, ready for TikTok, Reels and Shorts.</p>
+
+      <div class="drop glass" id="drop" role="button" tabindex="0" aria-label="Upload a video: drag a file here or press Enter to browse">
+        <div class="up-ico" aria-hidden="true">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M7 9l5-5 5 5M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
+        </div>
+        <div class="up-txt">
+          <strong>Drop your long video here</strong>
+          <span>or <u>browse files</u></span>
+          <small>MP4, MOV or WebM, up to 4 GB.</small>
+        </div>
+        <input type="file" id="file" accept="video/*" hidden>
+      </div>
+      <p class="err" id="err" role="alert" hidden></p>
+    </div>
+
+    <figure class="demo glass">
+      <div class="src-col" aria-hidden="true">
+        <div class="src"><div class="fig f1"></div><div class="fig f2"></div><div class="crop"></div></div>
+        <div class="tl" id="wave"><b class="hit" style="left:18%">92</b><b class="hit" style="left:52%">88</b><b class="hit" style="left:81%">81</b></div>
+      </div>
+      <div class="phone" aria-hidden="true">
+        <div class="fig"></div>
+        <div class="caps"><i>This</i><i>is</i><i>the</i><i>moment</i></div>
+      </div>
+      <figcaption>Demo: the vertical crop follows the speaker, scored moments are marked on the timeline, and captions appear word by word.</figcaption>
+    </figure>
+  </section>
+
+  <section aria-labelledby="clips-h">
+    <div class="sec-head">
+      <h2 id="clips-h">Your clips</h2>
+      <p id="gridHint">Sample clips are shown until you add a video.</p>
+    </div>
+    <div class="prog glass">
+      <div class="prog-row"><span id="stage">Waiting for a video</span><span id="pct">0%</span></div>
+      <div class="bar" id="pbar" role="progressbar" aria-label="Processing progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="fill" id="fill"></div></div>
+    </div>
+    <div class="grid" id="grid"></div>
+  </section>
+
+  <section aria-labelledby="feat-h">
+    <div class="sec-head">
+      <h2 id="feat-h">Built for creators</h2>
+      <p>Three things that do the editing work for you.</p>
+    </div>
+    <div class="feats">
+      <article class="feat glass">
+        <div class="feat-ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h3l2.5-7 4 14 3-9 1.5 2H21"/></svg></div>
+        <h3>AI Highlight Detection</h3>
+        <p>Scans the whole video for high-energy moments and ranks each one with a viral score, so the best cuts come first.</p>
+      </article>
+      <article class="feat glass">
+        <div class="feat-ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M7 10h4M13 10h4M7 14h6"/></svg></div>
+        <h3>Auto-Captioning</h3>
+        <p>Adds word-by-word captions to every clip, so people can follow along with the sound off.</p>
+      </article>
+      <article class="feat glass">
+        <div class="feat-ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3"/><circle cx="12" cy="10.5" r="2.5"/><path d="M7.5 17c.8-2 2.4-3 4.5-3s3.7 1 4.5 3"/></svg></div>
+        <h3>Face-Tracking Crop</h3>
+        <p>Reframes widescreen footage to 9:16 and keeps the speaker in the middle of the shot.</p>
+      </article>
+    </div>
+  </section>
+
+  <footer>Videos are processed on the machine running Clipwave and deleted after 24 hours.</footer>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+  var $ = function(s){ return document.querySelector(s); };
+  var drop=$('#drop'), file=$('#file'), err=$('#err'), fill=$('#fill'), pbar=$('#pbar'),
+      stage=$('#stage'), pct=$('#pct'), grid=$('#grid'), hint=$('#gridHint'), toastEl=$('#toast');
+  var busy=false, toastT, MAX_MB=4096;
+
+  /* demo waveform */
+  var wave=$('#wave');
+  for(var i=0;i<36;i++){
+    var s=document.createElement('span');
+    s.style.height=(18+Math.abs(Math.sin(i*1.7)+Math.sin(i*.6))*30)+'%';
+    wave.insertBefore(s, wave.querySelector('.hit'));
+  }
+
+  function fmt(t){ t=Math.max(0,Math.round(t)); return Math.floor(t/60)+':'+String(t%60).padStart(2,'0'); }
+  function sleep(ms){ return new Promise(function(r){ setTimeout(r,ms); }); }
+  function toast(msg){
+    toastEl.textContent=msg; toastEl.classList.add('show');
+    clearTimeout(toastT); toastT=setTimeout(function(){ toastEl.classList.remove('show'); },3600);
+  }
+  function setProgress(p,label){
+    p=Math.round(p);
+    fill.style.width=p+'%'; pct.textContent=p+'%'; pbar.setAttribute('aria-valuenow',p);
+    if(label) stage.textContent=label;
+  }
+  function showErr(msg){
+    err.textContent=msg; err.hidden=false; setProgress(0,'Waiting for a video');
+  }
+
+  /* cards: job is set for real clips served by the backend, absent for the samples */
+  function card(c,i,job){
+    var el=document.createElement('article');
+    el.className='clip glass';
+    var base='/clips/'+job+'/', n=i+1;
+    var media=job ? '<img alt="Preview of highlight '+n+'" src="'+base+c.thumb+'">'
+                  : '<div class="art" style="--h:'+c.h+';--h2:'+(c.h-50)+'"></div>';
+    var play=job ? '<button type="button" class="play" aria-label="Play highlight '+n+'"><span><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"/></svg></span></button>' : '';
+    var btns=['TikTok','Reels','Shorts'].map(function(name){
+      return job
+        ? '<a class="xbtn" href="'+base+c.video+'?dl='+name.toLowerCase()+'" download aria-label="Download highlight '+n+' for '+name+'">'+name+'</a>'
+        : '<button type="button" class="xbtn" data-sample aria-label="Export highlight '+n+' to '+name+'">'+name+'</button>';
+    }).join('');
+    el.innerHTML=
+      '<div class="thumb">'+media+play+
+        '<span class="score"><b>'+c.score+'</b> Viral</span>'+
+        '<span class="chip tr">9:16</span>'+
+        (c.captions?'<span class="chip bl">CC</span>':'')+
+        (!job?'<span class="chip br">Sample</span>':(c.tracked?'<span class="chip br">Tracked</span>':''))+
+      '</div>'+
+      '<div class="meta"><h3>Highlight '+n+'</h3><p>'+fmt(c.start)+' – '+fmt(c.end)+' · '+Math.round(c.end-c.start)+'s</p></div>'+
+      '<div class="ex-label">One-click export</div>'+
+      '<div class="exports">'+btns+'</div>';
+    return el;
+  }
+  function render(list,job){
+    grid.textContent='';
+    list.forEach(function(c,i){ grid.appendChild(card(c,i,job)); });
+  }
+  grid.addEventListener('click',function(e){
+    if(e.target.closest('[data-sample]')){ toast('These are samples. Upload a video to export real clips.'); return; }
+    var p=e.target.closest('.play'); if(!p) return;
+    var thumb=p.parentNode, a=thumb.querySelector('img'), v=document.createElement('video');
+    v.src=a.src.replace(/\.jpg$/,'.mp4'); v.controls=true; v.autoplay=true; v.playsInline=true;
+    thumb.appendChild(v); thumb.classList.add('playing');
+  });
+
+  render([
+    {score:94,start:84,end:111,h:268,captions:true},
+    {score:88,start:402,end:431,h:222,captions:true},
+    {score:81,start:915,end:938,h:300,captions:true}
+  ]);
+
+  /* upload */
+  ['dragenter','dragover'].forEach(function(ev){ drop.addEventListener(ev,function(e){ e.preventDefault(); if(!busy) drop.classList.add('over'); }); });
+  ['dragleave','drop'].forEach(function(ev){ drop.addEventListener(ev,function(e){ e.preventDefault(); drop.classList.remove('over'); }); });
+  drop.addEventListener('drop',function(e){ var f=e.dataTransfer&&e.dataTransfer.files[0]; if(f) start(f); });
+  drop.addEventListener('click',function(){ if(!busy) file.click(); });
+  drop.addEventListener('keydown',function(e){ if((e.key==='Enter'||e.key===' ')&&!busy){ e.preventDefault(); file.click(); } });
+  file.addEventListener('change',function(){ var f=file.files[0]; file.value=''; if(f) start(f); });
+
+  var NO_SERVER='Cannot reach the Clipwave server. Start it with "python3 server.py" and open http://localhost:8000.';
+
+  function upload(f){
+    return new Promise(function(res,rej){
+      var x=new XMLHttpRequest();
+      x.open('POST','/api/jobs');
+      x.setRequestHeader('X-Filename',f.name);
+      x.upload.onprogress=function(e){ if(e.lengthComputable) setProgress(1+e.loaded/e.total*14,'Uploading'); };
+      x.onload=function(){
+        var body=null; try{ body=JSON.parse(x.responseText); }catch(_){}
+        if(x.status===200&&body&&body.id) res(body.id);
+        else rej(new Error(body&&body.error ? body.error : NO_SERVER));
+      };
+      x.onerror=function(){ rej(new Error(NO_SERVER)); };
+      x.send(f);
+    });
+  }
+
+  /* progress from the server covers 15-100% of the bar; clips appear as each one finishes */
+  async function track(id){
+    var shown=0;
+    for(;;){
+      await sleep(1000);
+      var r=await fetch('/api/jobs/'+id);
+      if(!r.ok) throw new Error('The server no longer has this job. Upload the video again.');
+      var j=await r.json();
+      setProgress(15+j.progress*.85, j.stage);
+      if(j.clips.length!==shown){ shown=j.clips.length; render(j.clips,id); }
+      if(j.status==='error') throw new Error(j.error);
+      if(j.status==='done'){
+        if(!shown) throw new Error('No highlights found in this video.');
+        setProgress(100,'Done. '+shown+(shown===1?' clip':' clips')+' ready');
+        hint.textContent='Clips from your video, ranked by viral score. Press play to preview or use an export button to download.';
+        return;
+      }
+    }
+  }
+
+  async function start(f){
+    if(busy) return;
+    err.hidden=true;
+    if(!f.type||f.type.indexOf('video/')!==0){ showErr('That file is not a video. Try an MP4, MOV or WebM file.'); return; }
+    if(f.size>MAX_MB*1048576){ showErr('That video is over '+MAX_MB+' MB. Trim it or compress it first.'); return; }
+    busy=true; drop.classList.add('busy'); drop.setAttribute('aria-disabled','true');
+    try{ await track(await upload(f)); }
+    catch(e){ showErr(e instanceof TypeError ? 'Lost connection to the Clipwave server.' : e.message); }
+    finally{ busy=false; drop.classList.remove('busy'); drop.removeAttribute('aria-disabled'); }
+  }
+})();
+</script>
